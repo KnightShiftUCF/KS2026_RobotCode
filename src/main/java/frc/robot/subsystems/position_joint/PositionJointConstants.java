@@ -51,7 +51,7 @@ public class PositionJointConstants {
 
   public static final PositionJointHardwareConfig EXAMPLE_CONFIG =
       new PositionJointHardwareConfig(
-          new int[] {10},
+          new int[] {7},
           new boolean[] {true},
           85.33333 * 2 * Math.PI,
           40,
@@ -60,4 +60,53 @@ public class PositionJointConstants {
           11,
           Rotation2d.fromRotations(0.5),
           "");
+
+
+  public static final PositionJointHardwareConfig INTAKE_PIVOT = 
+      new PositionJointHardwareConfig(
+        new int[] {7},
+       new boolean[] {false},
+       27 * (44 / 36),
+       40,
+       GravityType.SINE,
+       EncoderType.INTERNAL,
+       -1,
+       Rotation2d.fromRotations(0),
+       "");
+
+  public static final PositionJointHardwareConfig SHOOTER_HOOD = 
+      new PositionJointHardwareConfig(
+        new int[] {10},
+       new boolean[] {false},
+       12,
+       30,
+       GravityType.SINE,
+       EncoderType.INTERNAL,
+       -1,
+       Rotation2d.fromRotations(0),
+       "");
+
+  public static final PositionJointHardwareConfig LEFT_CLIMB = 
+      new PositionJointHardwareConfig(
+        new int[] {5},
+       new boolean[] {false},
+      9 * 3 * 3,
+       40,
+       GravityType.CONSTANT,
+       EncoderType.INTERNAL,
+       -1,
+       Rotation2d.fromRotations(0),
+       "");
+
+  public static final PositionJointHardwareConfig RIGHT_CLIMBER = 
+      new PositionJointHardwareConfig(
+        new int[] {6},
+       new boolean[] {false},
+       9 * 3 * 3,
+       40,
+       GravityType.CONSTANT,
+       EncoderType.INTERNAL,
+       -1,
+       Rotation2d.fromRotations(0),
+       "");
 }

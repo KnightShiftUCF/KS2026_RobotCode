@@ -28,10 +28,12 @@ public class CANDriveSubsystem extends SubsystemBase {
     m_rightFrontDrive = new WPI_VictorSPX(RIGHT_LEADER_ID);
     m_rightBackDrive = new WPI_VictorSPX(RIGHT_FOLLOWER_ID);
 
+    m_rightFrontDrive.setInverted(true);
+    m_rightBackDrive.setInverted(true);
+
+
     m_leftBackDrive.follow(m_leftFrontDrive);
     m_rightBackDrive.follow(m_rightFrontDrive);
-
-    m_rightFrontDrive.setInverted(true);
 
     drive = new DifferentialDrive(m_leftFrontDrive, m_rightFrontDrive);
   }

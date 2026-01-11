@@ -11,6 +11,18 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 
+import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
+
+import edu.wpi.first.apriltag.jni.AprilTagJNI;
+import edu.wpi.first.apriltag.*;
+import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.cscore.CvSink;
+import edu.wpi.first.cscore.CvSource;
+import edu.wpi.first.cscore.UsbCamera;
+
 /**
  * The VM is configured to automatically run this class, and to call the
  * functions corresponding to
@@ -23,7 +35,105 @@ import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
+  Thread m_visionThread;
+
   private RobotContainer m_robotContainer;
+
+
+  private void startImageProcThread() {
+    m_visionThread =
+        new Thread(
+            () -> {
+              // Get the UsbCamera from CameraServer
+              UsbCamera camera = CameraServer.startAutomaticCapture();
+              // Set the resolution
+              camera.setResolution(640, 480);
+              // Get a CvSink. This will capture Mats from the camera
+              CvSink cvSink = CameraServer.getVideo();
+              // Setup a CvSource. This will send images back to the Dashboard
+              CvSource outputStream = CameraServer.putVideo("AprilTag Detection", 640, 480);
+              
+              // Mats are very memory expensive. Reuse these Mats.
+              Mat mat = new Mat();
+              Mat grayMat = new Mat();
+              
+              // Create AprilTag detector
+              AprilTagDetector detector = new AprilTagDetector();
+              
+              // Add tag family (tag36h11 is standard for FRC)
+              detector.addFamily("tag41h11");
+              
+              // Configure detector for reasonable performance on RoboRIO 2
+              AprilTagDetector.Config config = new AprilTagDetector.Config();
+              config.numThreads = 4;
+              config.quadDecimate = 2.0f;
+              config.quadSigma = 0.0f;
+              config.refineEdges = true;
+              config.decodeSharpening = 0.25;
+              detector.setConfig(config);
+              
+              // Colors for drawing
+              Scalar greenColor = new Scalar(0, 255, 0);
+              Scalar redColor = new Scalar(0, 0, 255);
+              Scalar blueColor = new Scalar(255, 0, 0);
+              
+              while (!Thread.interrupted()) {
+                // Grab frame from camera
+                if (cvSink.grabFrame(mat) == 0) {
+                  outputStream.notifyError(cvSink.getError());
+                  continue;
+                }
+                
+                // Convert to grayscale for AprilTag detection
+                Imgproc.cvtColor(mat, grayMat, Imgproc.COLOR_BGR2GRAY);
+                
+                // Detect AprilTags
+                AprilTagDetection[] detections = detector.detect(grayMat);
+                
+                // Draw detections on the color image
+                for (AprilTagDetection detection : detections) {
+                  // Draw the four corners of the tag
+                  for (int i = 0; i < 4; i++) {
+                    int j = (i + 1) % 4;
+                    Point pt1 = new Point(detection.getCornerX(i), detection.getCornerY(i));
+                    Point pt2 = new Point(detection.getCornerX(j), detection.getCornerY(j));
+                    Imgproc.line(mat, pt1, pt2, greenColor, 2);
+                  }
+                  
+                  // Draw center point
+                  Point center = new Point(detection.getCenterX(), detection.getCenterY());
+                  Imgproc.circle(mat, center, 5, redColor, -1);
+                  
+                  // Draw tag ID
+                  String idText = "ID: " + detection.getId();
+                  Imgproc.putText(mat, idText, 
+                                  new Point(center.x + 10, center.y - 10),
+                                  Imgproc.FONT_HERSHEY_SIMPLEX, 0.6, blueColor, 2);
+                  
+                  // Draw decision margin (detection confidence)
+                  String marginText = String.format("Margin: %.1f", detection.getDecisionMargin());
+                  Imgproc.putText(mat, marginText,
+                                  new Point(center.x + 10, center.y + 10),
+                                  Imgproc.FONT_HERSHEY_SIMPLEX, 0.5, blueColor, 1);
+                }
+                
+                // Draw detection count
+                String countText = "Tags: " + detections.length;
+                Imgproc.putText(mat, countText, new Point(10, 30),
+                                Imgproc.FONT_HERSHEY_SIMPLEX, 0.7, greenColor, 2);
+                
+                // Send processed frame to dashboard
+                outputStream.putFrame(mat);
+              }
+              
+              // Clean up detector when thread ends
+              detector.close();
+              grayMat.release();
+              mat.release();
+            });
+    m_visionThread.setDaemon(true);
+    m_visionThread.start();
+  }
 
   /**
    * This function is run when the robot is first started up and should be used
@@ -36,6 +146,8 @@ public class Robot extends TimedRobot {
     // and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
+
+    startImageProcThread();
 
     // Used to track usage of Kitbot code, please do not remove.
     HAL.report(tResourceType.kResourceType_Framework, 10);
@@ -128,3 +240,5 @@ public class Robot extends TimedRobot {
   public void simulationPeriodic() {
   }
 }
+
+ 

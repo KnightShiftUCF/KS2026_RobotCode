@@ -28,4 +28,14 @@ public class FlywheelConstants {
 
   public static final FlywheelHardwareConfig FEEDER_FLYWHEEL =
       new FlywheelHardwareConfig(new int[] {11}, new boolean[] {true}, 16/40, 30, "");
+
+
+  public static final FlywheelGains INTAKE_ROLLER =
+      new FlywheelGains(0, 0.0, 0.0, 0.0, 0.065, 0.0, 1.0, 1.0);
+
+  public static final FlywheelGains SHOOTER =
+      new FlywheelGains(0, 0.0, 0.0, 0.0, 0.065, 0.0, 1.0, 1.0);
+
+  public static final FlywheelGains FEEDER =
+      new FlywheelGains(0, 0.0, 0.0, 0.0, 0.065, 0.0, 1.0, 1.0);
 }

@@ -12,7 +12,15 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import static frc.robot.Constants.OperatorConstants.*;
 import frc.robot.commands.Autos;
+import frc.robot.commands.IntakeCommands;
 import frc.robot.subsystems.CANDriveSubsystem;
+import frc.robot.subsystems.flywheel.Flywheel;
+import frc.robot.subsystems.flywheel.FlywheelConstants;
+import frc.robot.subsystems.flywheel.FlywheelIOSparkMax;
+import frc.robot.subsystems.position_joint.PositionJoint;
+import frc.robot.subsystems.position_joint.PositionJointConstants;
+import frc.robot.subsystems.position_joint.PositionJointIOSparkMax;
+import frc.robot.subsystems.position_joint.PositionJointConstants.PositionJointGains;
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -24,6 +32,17 @@ import frc.robot.subsystems.CANDriveSubsystem;
 public class RobotContainer {
   // The robot's subsystems
   private final CANDriveSubsystem driveSubsystem = new CANDriveSubsystem();
+  private PositionJoint intakeRotationMotor =
+  new PositionJoint(
+    new PositionJointIOSparkMax("intakeRotationMotor",
+     PositionJointConstants.INTAKE_PIVOT),
+     PositionJointConstants.INTAKE
+  );
+  private Flywheel intakeRollerMotor =
+  new Flywheel(
+    new FlywheelIOSparkMax("intakeRollerMotor",
+    FlywheelConstants.INTAKE_FLYWHEEL),
+    FlywheelConstants.INTAKE_ROLLER);
 
   // The driver's controller
   private final  CommandPS4Controller driverController = new CommandPS4Controller(
@@ -68,6 +87,12 @@ public class RobotContainer {
         driveSubsystem.driveArcade(
             () -> -driverController.getLeftY() * DRIVE_SCALING,
             () -> -driverController.getRightX() * ROTATION_SCALING));
+
+     // Coral Intake
+    driverController // Right bumper to deploy right coral intake
+        .R1()
+        .whileTrue(IntakeCommands.deployIntake(intakeRotationMotor,intakeRollerMotor))
+        .whileFalse(IntakeCommands.stowIntake(intakeRotationMotor, intakeRollerMotor));
   }
 
   /**

@@ -109,4 +109,52 @@ public class PositionJointConstants {
        -1,
        Rotation2d.fromRotations(0),
        "");
+
+   public static final PositionJointGains INTAKE =
+      new PositionJointGains(
+      0,
+      0.0,
+      0.0,
+      0,
+      0,
+      0,
+      0.0,
+      10.0,
+      20.0,
+      0.0,
+     0,
+      0.2,
+      0.0);
+
+   public static final PositionJointGains HOOD =
+      new PositionJointGains(
+      0,
+      0.0,
+      0.0,
+      0,
+      0,
+      0,
+      0.0,
+      10.0,
+      20.0,
+      0.0,
+     0,
+      0.2,
+      0.0);
+
+   public static final PositionJointGains CLIMB =
+      new PositionJointGains(
+      0,
+      0.0,
+      0.0,
+      0,
+      0,
+      0,
+      0.0,
+      10.0,
+      20.0,
+      0.0,
+     0,
+      0.2,
+      0.0);
 }

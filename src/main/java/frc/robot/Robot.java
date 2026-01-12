@@ -5,6 +5,10 @@
 package frc.robot;
 
 import edu.wpi.first.hal.HAL;
+import edu.wpi.first.math.geometry.Quaternion;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -61,7 +65,7 @@ public class Robot extends TimedRobot {
               AprilTagDetector detector = new AprilTagDetector();
               
               // Add tag family (tag36h11 is standard for FRC)
-              detector.addFamily("tag41h11");
+              detector.addFamily("tag36h11");
               
               // Configure detector for reasonable performance on RoboRIO 2
               AprilTagDetector.Config config = new AprilTagDetector.Config();
@@ -72,10 +76,26 @@ public class Robot extends TimedRobot {
               config.decodeSharpening = 0.25;
               detector.setConfig(config);
               
+              // Create pose estimator
+              // You'll need to adjust these camera parameters for your specific camera
+              // tagSize is in meters (16 inches = 0.1524 meters for FRC tags)
+              // fx, fy are focal lengths in pixels, cx, cy are principal point coordinates
+              AprilTagPoseEstimator.Config poseConfig = 
+                  new AprilTagPoseEstimator.Config(
+                      0.1524,  // tag size in meters (6 inches)
+                      640.0,   // fx (approximate, needs calibration)
+                      640.0,   // fy (approximate, needs calibration)
+                      320.0,   // cx (image width / 2)
+                      240.0);  // cy (image height / 2)
+              
+              AprilTagPoseEstimator poseEstimator = new AprilTagPoseEstimator(poseConfig);
+              
               // Colors for drawing
               Scalar greenColor = new Scalar(0, 255, 0);
               Scalar redColor = new Scalar(0, 0, 255);
               Scalar blueColor = new Scalar(255, 0, 0);
+              Scalar cyanColor = new Scalar(255, 255, 0);
+              Scalar magentaColor = new Scalar(255, 0, 255);
               
               while (!Thread.interrupted()) {
                 // Grab frame from camera
@@ -115,6 +135,51 @@ public class Robot extends TimedRobot {
                   Imgproc.putText(mat, marginText,
                                   new Point(center.x + 10, center.y + 10),
                                   Imgproc.FONT_HERSHEY_SIMPLEX, 0.5, blueColor, 1);
+                  
+                  // Estimate pose and draw 3D axes
+                  Transform3d pose = poseEstimator.estimate(detection);
+                  
+                  // Project 3D points to 2D for visualization
+                  // Draw coordinate axes: X=red, Y=green, Z=blue
+                  double axisLength = 0.05; // 5cm axes in meters
+                  
+                  // Camera intrinsic matrix parameters
+                  double fx = poseConfig.fx;
+                  double fy = poseConfig.fy;
+                  double cx = poseConfig.cx;
+                  double cy = poseConfig.cy;
+                  
+                  // Get pose translation and rotation
+                  Translation3d translation = pose.getTranslation();
+                  Rotation3d rotation = pose.getRotation();
+                  
+                  // Origin point (tag center in 3D)
+                  Point origin = project3DPoint(translation.getX(), translation.getY(), 
+                                                translation.getZ(), fx, fy, cx, cy);
+                  
+                  // X-axis point (red)
+                  Vector3d xAxis = rotatePoint(axisLength, 0, 0, rotation);
+                  Point xPoint = project3DPoint(translation.getX() + xAxis.getX(), 
+                                                translation.getY() + xAxis.getY(),
+                                                translation.getZ() + xAxis.getZ(), 
+                                                fx, fy, cx, cy);
+                  Imgproc.line(mat, origin, xPoint, redColor, 3);
+                  
+                  // Y-axis point (green)
+                  Vector3d yAxis = rotatePoint(0, axisLength, 0, rotation);
+                  Point yPoint = project3DPoint(translation.getX() + yAxis.getX(),
+                                                translation.getY() + yAxis.getY(),
+                                                translation.getZ() + yAxis.getZ(),
+                                                fx, fy, cx, cy);
+                  Imgproc.line(mat, origin, yPoint, greenColor, 3);
+                  
+                  // Z-axis point (blue)
+                  Vector3d zAxis = rotatePoint(0, 0, axisLength, rotation);
+                  Point zPoint = project3DPoint(translation.getX() + zAxis.getX(),
+                                                translation.getY() + zAxis.getY(),
+                                                translation.getZ() + zAxis.getZ(),
+                                                fx, fy, cx, cy);
+                  Imgproc.line(mat, origin, zPoint, blueColor, 3);
                 }
                 
                 // Draw detection count
@@ -133,6 +198,62 @@ public class Robot extends TimedRobot {
             });
     m_visionThread.setDaemon(true);
     m_visionThread.start();
+  }
+  
+  // Helper method to project 3D point to 2D image coordinates
+  private Point project3DPoint(double x, double y, double z, double fx, double fy, double cx, double cy) {
+    // Simple pinhole camera projection
+    double u = fx * (x / z) + cx;
+    double v = fy * (y / z) + cy;
+    return new Point(u, v);
+  }
+  
+  // Helper method to rotate a point by a rotation
+  private Vector3d rotatePoint(double x, double y, double z, Rotation3d rotation) {
+    // Convert to quaternion and rotate
+    Quaternion q = rotation.getQuaternion();
+    
+    // Quaternion rotation: v' = q * v * q^-1
+    // For simplicity, using rotation matrix
+    double[][] rotMatrix = new double[3][3];
+    
+    // Convert quaternion to rotation matrix
+    double w = q.getW();
+    double qx = q.getX();
+    double qy = q.getY();
+    double qz = q.getZ();
+    
+    rotMatrix[0][0] = 1 - 2*qy*qy - 2*qz*qz;
+    rotMatrix[0][1] = 2*qx*qy - 2*qz*w;
+    rotMatrix[0][2] = 2*qx*qz + 2*qy*w;
+    rotMatrix[1][0] = 2*qx*qy + 2*qz*w;
+    rotMatrix[1][1] = 1 - 2*qx*qx - 2*qz*qz;
+    rotMatrix[1][2] = 2*qy*qz - 2*qx*w;
+    rotMatrix[2][0] = 2*qx*qz - 2*qy*w;
+    rotMatrix[2][1] = 2*qy*qz + 2*qx*w;
+    rotMatrix[2][2] = 1 - 2*qx*qx - 2*qy*qy;
+    
+    // Apply rotation
+    double rx = rotMatrix[0][0]*x + rotMatrix[0][1]*y + rotMatrix[0][2]*z;
+    double ry = rotMatrix[1][0]*x + rotMatrix[1][1]*y + rotMatrix[1][2]*z;
+    double rz = rotMatrix[2][0]*x + rotMatrix[2][1]*y + rotMatrix[2][2]*z;
+    
+    return new Vector3d(rx, ry, rz);
+  }
+  
+  // Simple 3D vector class for helper calculations
+  private static class Vector3d {
+    private final double x, y, z;
+    
+    public Vector3d(double x, double y, double z) {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+    }
+    
+    public double getX() { return x; }
+    public double getY() { return y; }
+    public double getZ() { return z; }
   }
 
   /**

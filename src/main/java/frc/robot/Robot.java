@@ -5,6 +5,7 @@
 package frc.robot;
 
 import edu.wpi.first.hal.HAL;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Quaternion;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -46,10 +47,30 @@ public class Robot extends TimedRobot {
   //declare navx
   private AHRS navx;
 
+  //variables for auto turning to degrees
+   PIDController turnController;
+   double rotateToAngleRate;
+
+
+    /* The following PID Controller coefficients will need to be tuned */
+  /* to match the dynamics of your drive system.  Note that the      */
+  /* SmartDashboard in Test mode has support for helping you tune    */
+  /* controllers by displaying a form where you can enter new P, I,  */
+  /* and D constants and test the mechanism.                         */
+  
+  static final double kP = 0.03;
+  static final double kI = 0.00;
+  static final double kD = 0.00;
+  static final double kF = 0.00;
+
+  /* This tuning parameter indicates how close to "on target" the    */
+/* PID Controller will attempt to get.                             */
+
+  static final double kToleranceDegrees = 2.0f;
+
   Thread m_visionThread;
 
   private RobotContainer m_robotContainer;
-
 
   private void startImageProcThread() {
     m_visionThread =

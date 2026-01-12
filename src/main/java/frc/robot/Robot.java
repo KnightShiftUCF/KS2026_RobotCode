@@ -11,6 +11,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
@@ -27,6 +28,9 @@ import edu.wpi.first.cscore.CvSink;
 import edu.wpi.first.cscore.CvSource;
 import edu.wpi.first.cscore.UsbCamera;
 
+//navx dependencies
+import com.kauailabs.navx.frc.AHRS;
+import edu.wpi.first.wpilibj.SPI;
 /**
  * The VM is configured to automatically run this class, and to call the
  * functions corresponding to
@@ -38,6 +42,9 @@ import edu.wpi.first.cscore.UsbCamera;
  */
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
+
+  //declare navx
+  private AHRS navx;
 
   Thread m_visionThread;
 
@@ -272,6 +279,9 @@ public class Robot extends TimedRobot {
 
     // Used to track usage of Kitbot code, please do not remove.
     HAL.report(tResourceType.kResourceType_Framework, 10);
+
+    //start navX
+    navx = new AHRS(SPI.Port.kMXP);
   }
 
   /**
@@ -349,6 +359,13 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during test mode. */
   @Override
   public void testPeriodic() {
+    //print out navx values for testing purposes
+    SmartDashboard.putBoolean("NavX Connected", navx.isConnected());
+    SmartDashboard.putBoolean("NavX Calibrating", navx.isCalibrating());
+    SmartDashboard.putNumber("NavX Yaw", navx.getYaw());
+    SmartDashboard.putNumber("NavX Pitch", navx.getPitch());
+    SmartDashboard.putNumber("NavX Roll", navx.getRoll());
+
   }
 
   /** This function is called once when the robot is first started up. */

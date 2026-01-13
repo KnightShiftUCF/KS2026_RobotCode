@@ -5,7 +5,9 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
@@ -15,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import static frc.robot.Constants.OperatorConstants.*;
 import frc.robot.commands.Autos;
 import frc.robot.commands.IntakeCommands;
+import frc.robot.commands.flywheel.FlywheelVoltageCommand;
 import frc.robot.subsystems.CANDriveSubsystem;
 import frc.robot.subsystems.flywheel.Flywheel;
 import frc.robot.subsystems.flywheel.FlywheelConstants;
@@ -50,6 +53,7 @@ public class RobotContainer {
   
   private PositionJoint intakePivot = new PositionJoint(new PositionJointIOSparkMax("intakePivotMotor", PositionJointConstants.INTAKE_PIVOT), PositionJointConstants.EXAMPLE_GAINS);
 
+  private Flywheel kickerMotor = new Flywheel(new FlywheelIOSparkMax("kickerMotor", FlywheelConstants.FEEDER_FLYWHEEL), FlywheelConstants.EXAMPLE_GAINS);
   // The driver's controller
   private final  CommandPS4Controller driverController = new CommandPS4Controller(
       DRIVER_CONTROLLER_PORT);
@@ -94,19 +98,22 @@ public class RobotContainer {
             () -> driverController.getLeftY() * DRIVE_SCALING,
             () -> -driverController.getRightX() * ROTATION_SCALING));
 
-    shooterMotor.setDefaultCommand(new RunCommand(() -> shooterMotor.setVoltage(driverController.getL2Axis()*12.0), shooterMotor));
-    intakePivot.setDefaultCommand(new InstantCommand(() -> intakePivot.setVoltage(0), intakePivot));
-    
-     // Coral Intake
-    driverController // Right bumper to deploy right coral intake
-        .R1()
+    // shooterMotor.setDefaultCommand(new RunCommand(() -> shooterMotor.setVoltage(driverController.getL2Axis()), shooterMotor));
+    // intakePivot.setDefaultCommand(new InstantCommand(() -> intakePivot.setVoltage(0), intakePivot));
+
+    CommandScheduler.getInstance().schedule(new RunCommand(()->SmartDashboard.putNumber("L2 value", driverController.getRawAxis(3))));
+  
+    //  // Coral Intake
+    // driverController // Right bumper to deploy right coral intake
+    //     .R1()
         
-        .whileTrue(IntakeCommands.deployIntake(intakeRollerMotor))
-        .whileFalse(IntakeCommands.stowIntake(intakeRollerMotor));
-        
+    //     .whileTrue(IntakeCommands.deployIntake(intakeRollerMotor))
+    //     .whileFalse(IntakeCommands.stowIntake(intakeRollerMotor));
+    driverController.R1().whileTrue(new FlywheelVoltageCommand(intakeRollerMotor, ()->8)).whileFalse(new FlywheelVoltageCommand(intakeRollerMotor, () -> 0));
     driverController.R2().whileTrue(new InstantCommand(()->shooterMotor.setVoltage(8))).whileFalse(new InstantCommand(()->shooterMotor.setVoltage(0)));
-    driverController.cross().whileTrue(new RunCommand(()->intakePivot.setVoltage(-8), intakePivot));
-    driverController.circle().whileTrue(new RunCommand(()->intakePivot.setVoltage(8), intakePivot));
+    driverController.L2().whileTrue(new InstantCommand(()->kickerMotor.setVoltage(8))).whileFalse(new InstantCommand(()->kickerMotor.setVoltage(0)));
+    driverController.cross().whileTrue(new InstantCommand(()->intakePivot.setVoltage(-4), intakePivot)).whileFalse(new InstantCommand(()->intakePivot.setVoltage(4), intakePivot));
+    // driverController.circle().whileTrue(new InstantCommand(()->intakePivot.setVoltage(8), intakePivot));
     // driverController.cross().negate().and(driverController.circle().negate()).whileTrue(new InstantCommand(() -> intakePivot.setVoltage(0), intakePivot));
   }
 

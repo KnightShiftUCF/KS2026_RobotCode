@@ -16,13 +16,13 @@ public class IntakeCommands {
     public static final LoggedTunableNumber STOW =
         new LoggedTunableNumber("IntakeRotation/Stow", 0);
     public static final LoggedTunableNumber DEPLOY =
-        new LoggedTunableNumber("IntakePosition/Deploy", Units.degreesToRotations(101));
+        new LoggedTunableNumber("IntakePosition/Deploy", Units.degreesToRotations(90));
   }
 
   /** Intake roller preset voltages. */
   public final class ROLLER_VOLTS {
     public static final LoggedTunableNumber INTAKE =
-        new LoggedTunableNumber("IntakeSpeed", -6);
+        new LoggedTunableNumber("IntakeSpeed", 6);
     public static final LoggedTunableNumber STOW =
         new LoggedTunableNumber("OuttakeSpeed", -1.5);
     public static final LoggedTunableNumber EMERGENCY =
@@ -34,23 +34,23 @@ public class IntakeCommands {
    * Stows the intake by moving the rotation motor to the up position and set ting the roller motor
    * to stow speed.
    */
-  public static Command stowIntake(PositionJoint rotationMotor, Flywheel rollerMotor) {
+  public static Command stowIntake(Flywheel rollerMotor) {
     return Commands.parallel(
-        new PositionJointPositionCommand(rotationMotor, ROTATION_POSITIONS.STOW),
-        new FlywheelVoltageCommand(rollerMotor, ROLLER_VOLTS.STOW));
+        // new PositionJointPositionCommand(rotationMotor, ROTATION_POSITIONS.STOW),
+        new FlywheelVoltageCommand(rollerMotor, ROLLER_VOLTS.STOP));
   }
 
   /**
    * Deploys the intake by moving the rotation motor to the down position and setting the roller
    * motor to intake speed.
    */
-  public static Command deployIntake(PositionJoint rotationMotor, Flywheel rollerMotor) {
+  public static Command deployIntake(Flywheel rollerMotor) {
     return Commands.parallel(
-        new PositionJointPositionCommand(rotationMotor, ROTATION_POSITIONS.DEPLOY),
+        // new PositionJointPositionCommand(rotationMotor, ROTATION_POSITIONS.DEPLOY),
         new FlywheelVoltageCommand(rollerMotor, ROLLER_VOLTS.INTAKE));
   }
 
-  
+
 
 
     

@@ -61,8 +61,10 @@ public class FlywheelIOSparkMax implements FlywheelIO {
           new SparkMaxConfig()
               .apply(
                   new EncoderConfig()
-                      .positionConversionFactor(1.0 / config.gearRatio())
-                      .velocityConversionFactor(1.0 / (60.0 * config.gearRatio())))
+                      //causes error (value calculates to inf.)
+                      // .positionConversionFactor(1.0 / config.gearRatio())
+                      // .velocityConversionFactor(1.0 / (60.0 * config.gearRatio())))
+              )
               .inverted(config.reversed()[0])
               .smartCurrentLimit(config.currentLimit());
 
@@ -71,8 +73,9 @@ public class FlywheelIOSparkMax implements FlywheelIO {
           new SparkMaxConfig()
               .apply(
                   new EncoderConfig()
-                      .positionConversionFactor(1.0 / config.gearRatio())
-                      .velocityConversionFactor(1.0 / (60.0 * config.gearRatio()))
+                      //causes error (value calculates to inf.)
+                      // .positionConversionFactor(1.0 / config.gearRatio())
+                      // .velocityConversionFactor(1.0 / (60.0 * config.gearRatio()))
                       .inverted(config.reversed()[0]))
               .smartCurrentLimit(config.currentLimit());
     }

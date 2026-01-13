@@ -88,6 +88,7 @@ public class PositionJointIOSparkMax implements PositionJointIO {
           new SparkMaxConfig()
               .apply(
                   new EncoderConfig()
+                      //possible error (value calculates to inf.)
                       .positionConversionFactor(1.0 / config.gearRatio())
                       .velocityConversionFactor(1.0 / (60.0 * config.gearRatio())))
               .inverted(config.reversed()[0])
@@ -98,6 +99,7 @@ public class PositionJointIOSparkMax implements PositionJointIO {
           new SparkMaxConfig()
               .apply(
                   new EncoderConfig()
+                      //possible error (value calculates to inf.)
                       .positionConversionFactor(1.0 / config.gearRatio())
                       .velocityConversionFactor(1.0 / (60.0 * config.gearRatio()))
                       .inverted(config.reversed()[0]))

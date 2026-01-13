@@ -32,12 +32,12 @@ import frc.robot.subsystems.position_joint.PositionJointConstants.PositionJointG
 public class RobotContainer {
   // The robot's subsystems
   private final CANDriveSubsystem driveSubsystem = new CANDriveSubsystem();
-  private PositionJoint intakeRotationMotor =
-  new PositionJoint(
-    new PositionJointIOSparkMax("intakeRotationMotor",
-     PositionJointConstants.INTAKE_PIVOT),
-     PositionJointConstants.INTAKE
-  );
+  // private PositionJoint intakeRotationMotor =
+  // new PositionJoint(
+  //   new PositionJointIOSparkMax("intakeRotationMotor",
+  //    PositionJointConstants.INTAKE_PIVOT),
+  //    PositionJointConstants.INTAKE
+  // );
   private Flywheel intakeRollerMotor =
   new Flywheel(
     new FlywheelIOSparkMax("intakeRollerMotor",
@@ -85,14 +85,15 @@ public class RobotContainer {
     // are also scaled down so the rotation is more easily controllable.
     driveSubsystem.setDefaultCommand(
         driveSubsystem.driveArcade(
-            () -> -driverController.getLeftY() * DRIVE_SCALING,
+            () -> driverController.getLeftY() * DRIVE_SCALING,
             () -> -driverController.getRightX() * ROTATION_SCALING));
 
      // Coral Intake
     driverController // Right bumper to deploy right coral intake
         .R1()
-        .whileTrue(IntakeCommands.deployIntake(intakeRotationMotor,intakeRollerMotor))
-        .whileFalse(IntakeCommands.stowIntake(intakeRotationMotor, intakeRollerMotor));
+        
+        .whileTrue(IntakeCommands.deployIntake(intakeRollerMotor))
+        .whileFalse(IntakeCommands.stowIntake(intakeRollerMotor));
   }
 
   /**

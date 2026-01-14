@@ -6,6 +6,8 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -13,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import static frc.robot.Constants.OperatorConstants.*;
 import frc.robot.commands.Autos;
 import frc.robot.commands.IntakeCommands;
+import frc.robot.commands.flywheel.FlywheelVoltageCommand;
 import frc.robot.subsystems.CANDriveSubsystem;
 import frc.robot.subsystems.flywheel.Flywheel;
 import frc.robot.subsystems.flywheel.FlywheelConstants;
@@ -43,6 +46,13 @@ public class RobotContainer {
     new FlywheelIOSparkMax("intakeRollerMotor",
     FlywheelConstants.INTAKE_FLYWHEEL),
     FlywheelConstants.INTAKE_ROLLER);
+
+  private Flywheel shooterMotor = new Flywheel(new FlywheelIOSparkMax("shooterMotor", FlywheelConstants.SHOOTER_FLYWHEEL), FlywheelConstants.SHOOTER);
+  private Flywheel indexMotor = new Flywheel(new FlywheelIOSparkMax("indexMotor", FlywheelConstants.FEEDER_FLYWHEEL), FlywheelConstants.INTAKE_ROLLER);
+  private PositionJoint intakePivotMotor = new PositionJoint(new PositionJointIOSparkMax("positionPivotMotor", PositionJointConstants.INTAKE_PIVOT), PositionJointConstants.INTAKE);
+  private PositionJoint hoodMotor = new PositionJoint(new PositionJointIOSparkMax("hoodMotor", PositionJointConstants.SHOOTER_HOOD), PositionJointConstants.HOOD);
+  
+
 
   // The driver's controller
   private final  CommandPS4Controller driverController = new CommandPS4Controller(
@@ -88,12 +98,14 @@ public class RobotContainer {
             () -> driverController.getLeftY() * DRIVE_SCALING,
             () -> -driverController.getRightX() * ROTATION_SCALING));
 
-     // Coral Intake
-    driverController // Right bumper to deploy right coral intake
-        .R1()
-        
-        .whileTrue(IntakeCommands.deployIntake(intakeRollerMotor))
-        .whileFalse(IntakeCommands.stowIntake(intakeRollerMotor));
+    shooterMotor.setDefaultCommand(new FlywheelVoltageCommand(shooterMotor, () -> (driverController.getL2Axis() + 1) * 6));
+    hoodMotor.setDefaultCommand(new RunCommand(() -> hoodMotor.setVoltage(driverController.getRightY() * 12), hoodMotor));
+
+    //  // Coral Intake
+    driverController.R1().whileTrue(new FlywheelVoltageCommand(intakeRollerMotor, ()->8)).whileFalse(new FlywheelVoltageCommand(intakeRollerMotor, ()->0));
+    
+    driverController.cross().whileTrue(new RunCommand(() -> intakePivotMotor.setVoltage(4), intakePivotMotor)).whileFalse(new RunCommand(() -> intakePivotMotor.setVoltage(-4), intakePivotMotor));
+    driverController.R2().whileTrue(new FlywheelVoltageCommand(indexMotor, ()->-12)).whileFalse(new FlywheelVoltageCommand(indexMotor, ()->0));
   }
 
   /**

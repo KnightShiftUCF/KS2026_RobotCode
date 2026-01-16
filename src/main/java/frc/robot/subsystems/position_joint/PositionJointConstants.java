@@ -1,6 +1,7 @@
 package frc.robot.subsystems.position_joint;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import frc.robot.subsystems.flywheel.FlywheelConstants.FlywheelHardwareConfig;
 
 public class PositionJointConstants {
   public enum GravityType {
@@ -125,6 +126,7 @@ public class PositionJointConstants {
      0,
       0.2,
       0.0);
+
 
    public static final PositionJointGains HOOD =
       new PositionJointGains(
